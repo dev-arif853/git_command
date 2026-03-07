@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🎮 Git Command Survival Guide</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.3/cdn.min.js" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          mono: ['Space Mono', 'monospace'],
+          display: ['Bebas Neue', 'cursive'],
+          body: ['Inter', 'sans-serif'],
+        },
+        colors: {
+          terminal: {
+            bg: '#0a0e0a',
+            surface: '#0f1a0f',
+            border: '#1a3a1a',
+            green: '#00ff41',
+            green2: '#00cc33',
+            green3: '#39ff14',
+            amber: '#ffb300',
+            red: '#ff3333',
+            cyan: '#00ffff',
+            dim: '#4a7a4a',
+          }
+        },
+        animation: {
+          'blink': 'blink 1s step-end infinite',
+          'scanline': 'scanline 8s linear infinite',
+          'glow-pulse': 'glowPulse 2s ease-in-out infinite',
+          'type': 'typing 1.5s steps(20) forwards',
+          'slide-in': 'slideIn 0.4s ease forwards',
+          'float': 'float 3s ease-in-out infinite',
+        },
+        keyframes: {
+          blink: { '0%,100%': { opacity: 1 }, '50%': { opacity: 0 } },
+          scanline: { '0%': { transform: 'translateY(-100%)' }, '100%': { transform: 'translateY(100vh)' } },
+          glowPulse: { '0%,100%': { textShadow: '0 0 8px #00ff41, 0 0 20px #00ff41' }, '50%': { textShadow: '0 0 20px #00ff41, 0 0 40px #00ff41, 0 0 60px #00ff41' } },
+          slideIn: { from: { opacity: 0, transform: 'translateY(10px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
+          float: { '0%,100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-8px)' } },
+        }
+      }
+    }
+  }
+</script>
+<style>
+  * { box-sizing: border-box; scroll-behavior: smooth; }
+  body {
+    background: #0a0e0a;
+    color: #a0c8a0;
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
+  .scanline {
+    position: fixed; top: 0; left: 0; width: 100%; height: 2px;
+    background: linear-gradient(transparent, rgba(0,255,65,0.08), transparent);
+    animation: scanline 8s linear infinite; pointer-events: none; z-index: 999;
+  }
+  .crt-overlay {
+    position: fixed; inset: 0; pointer-events: none; z-index: 998;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  }
+  .glow { text-shadow: 0 0 8px #00ff41, 0 0 20px #00ff4180; }
+  .glow-sm { text-shadow: 0 0 6px #00ff4180; }
+  .glow-amber { text-shadow: 0 0 8px #ffb300, 0 0 20px #ffb30080; }
+  .glow-red { text-shadow: 0 0 8px #ff3333, 0 0 20px #ff333380; }
+  .glow-cyan { text-shadow: 0 0 8px #00ffff, 0 0 20px #00ffff80; }
+  .card {
+    background: #0f1a0f;
+    border: 1px solid #1a3a1a;
+    border-radius: 6px;
+    transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+  }
+  .card:hover {
+    border-color: #00ff4150;
+    box-shadow: 0 0 20px #00ff4115, inset 0 0 20px #00ff4108;
+    transform: translateY(-2px);
+  }
+  .cmd-block {
+    background: #060f06;
+    border: 1px solid #1a3a1a;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    padding: 3px 8px;
+    font-size: 0.78rem;
+    color: #00ff41;
+    display: inline-block;
+  }
+  .cmd-block:hover { background: #0f2a0f; border-color: #00ff4160; box-shadow: 0 0 8px #00ff4130; }
+  .section-header {
+    font-family: 'Bebas Neue', cursive;
+    letter-spacing: 0.08em;
+    font-size: 2rem;
+    color: #00ff41;
+    text-shadow: 0 0 12px #00ff4160;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .badge-safe { background: #00ff4115; color: #00ff41; border: 1px solid #00ff4130; }
+  .badge-medium { background: #ffb30015; color: #ffb300; border: 1px solid #ffb30030; }
+  .badge-danger { background: #ff333315; color: #ff3333; border: 1px solid #ff333330; }
+  .nav-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: #4a7a4a;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .nav-link:hover { color: #00ff41; border-color: #1a3a1a; background: #0f1a0f; text-shadow: 0 0 6px #00ff4180; }
+  .tip-box {
+    border-left: 3px solid #00ff41;
+    background: #00ff410a;
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+  }
+  .warning-box {
+    border-left: 3px solid #ff3333;
+    background: #ff33330a;
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    color: #ff8080;
+  }
+  .amber-box {
+    border-left: 3px solid #ffb300;
+    background: #ffb3000a;
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    color: #ffd060;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-family: 'Space Mono', monospace; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #4a7a4a; padding: 8px 12px; text-align: left; border-bottom: 1px solid #1a3a1a; }
+  td { padding: 10px 12px; border-bottom: 1px solid #0f1a0f; font-size: 0.82rem; vertical-align: middle; }
+  tr:hover td { background: #0f1a0f80; }
+  td:first-child { font-family: 'Space Mono', monospace; }
+  .progress-bar { height: 4px; border-radius: 2px; background: #1a3a1a; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #00ff41, #39ff14); border-radius: 2px; transition: width 1s ease; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #060f06; }
+  ::-webkit-scrollbar-thumb { background: #1a3a1a; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #00ff4140; }
+  .toc-section { border-radius: 6px; overflow: hidden; }
+  .copy-btn { font-family: 'Space Mono', monospace; font-size: 0.65rem; background: #1a3a1a; color: #4a7a4a; border: none; padding: 2px 8px; border-radius: 3px; cursor: pointer; transition: all 0.2s; }
+  .copy-btn:hover { background: #00ff4120; color: #00ff41; }
+  .skull { display: inline-block; animation: float 3s ease-in-out infinite; }
+</style>
+</head>
+<body x-data="{ activeSection: 'config', copiedCmd: null, showToast: false }">
+
+<div class="scanline"></div>
+<div class="crt-overlay"></div>
+
+<!-- TOAST -->
+<div x-show="showToast" x-transition:enter="transition ease-out duration-200" x-transition:leave="transition ease-in duration-200"
+  class="fixed top-6 right-6 z-50 bg-terminal-surface border border-terminal-green rounded px-4 py-2 font-mono text-sm text-terminal-green glow-sm"
+  style="display:none;">
+  ✓ Copied to clipboard!
+</div>
+
+<!-- HERO -->
+<section class="relative overflow-hidden" style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+  <!-- bg grid -->
+  <div style="position:absolute;inset:0;background-image:linear-gradient(#1a3a1a20 1px,transparent 1px),linear-gradient(90deg,#1a3a1a20 1px,transparent 1px);background-size:40px 40px;"></div>
+  <!-- radial glow -->
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,#00ff4110 0%,transparent 70%);pointer-events:none;"></div>
+
+  <div class="relative text-center px-6" style="max-width:900px;">
+    <!-- Terminal bar -->
+    <div class="mx-auto mb-8" style="max-width:520px;">
+      <div class="card px-4 py-3 flex items-center gap-3">
+        <div class="flex gap-1.5">
+          <div style="width:10px;height:10px;border-radius:50%;background:#ff3333;box-shadow:0 0 6px #ff3333;"></div>
+          <div style="width:10px;height:10px;border-radius:50%;background:#ffb300;box-shadow:0 0 6px #ffb300;"></div>
+          <div style="width:10px;height:10px;border-radius:50%;background:#00ff41;box-shadow:0 0 6px #00ff41;"></div>
+        </div>
+        <span class="font-mono text-xs text-terminal-dim">bash — git-survival-guide</span>
+      </div>
+    </div>
+
+    <div class="font-mono text-terminal-green text-sm mb-4 glow-sm">$ cat README.md | git add --all --my-sanity</div>
+
+    <h1 class="font-display text-terminal-green glow" style="font-size:clamp(3rem,10vw,7rem); line-height:0.9; letter-spacing:0.05em; margin-bottom:16px;">
+      GIT COMMAND<br>SURVIVAL GUIDE
+    </h1>
+
+    <div class="font-mono text-terminal-dim text-sm mb-8">
+      <span class="text-terminal-amber glow-amber">Because "it works on my machine"</span><br>
+      isn't a version control strategy 🧙‍♂️
+    </div>
+
+    <!-- Stats row -->
+    <div class="grid grid-cols-3 gap-4 mb-10" style="max-width:480px;margin:0 auto 40px;">
+      <div class="card px-3 py-3 text-center">
+        <div class="font-display text-terminal-green glow" style="font-size:2rem;">80+</div>
+        <div class="font-mono text-xs text-terminal-dim">COMMANDS</div>
+      </div>
+      <div class="card px-3 py-3 text-center">
+        <div class="font-display text-terminal-amber glow-amber" style="font-size:2rem;">∞</div>
+        <div class="font-mono text-xs text-terminal-dim">BAD JOKES</div>
+      </div>
+      <div class="card px-3 py-3 text-center">
+        <div class="font-display text-terminal-red glow-red" style="font-size:2rem;">0</div>
+        <div class="font-mono text-xs text-terminal-dim">MERGE FEARS</div>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-3 justify-center">
+      <a href="#config" class="inline-block font-mono text-sm text-terminal-bg px-6 py-3 rounded" style="background:linear-gradient(135deg,#00ff41,#39ff14);box-shadow:0 0 20px #00ff4160;font-weight:700;transition:all 0.2s;" onmouseover="this.style.boxShadow='0 0 40px #00ff4180'" onmouseout="this.style.boxShadow='0 0 20px #00ff4160'">
+        START THE QUEST →
+      </a>
+      <a href="#best-practices" class="inline-block font-mono text-sm text-terminal-green px-6 py-3 rounded" style="border:1px solid #1a3a1a;background:#0f1a0f;transition:all 0.2s;" onmouseover="this.style.borderColor='#00ff4150';this.style.boxShadow='0 0 12px #00ff4120'" onmouseout="this.style.borderColor='#1a3a1a';this.style.boxShadow='none'">
+        SKIP TO WISDOM
+      </a>
+    </div>
+
+    <div class="mt-12 font-mono text-terminal-dim text-xs">
+      <span class="text-terminal-green">$</span> scroll down to begin_
+      <span class="animate-blink text-terminal-green">|</span>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN LAYOUT -->
+<div class="flex" style="min-height:100vh;">
+
+  <!-- SIDEBAR NAV -->
+  <aside style="width:220px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;background:#060f06;border-right:1px solid #1a3a1a;padding:20px 12px;" class="hidden lg:block">
+    <div class="font-display text-terminal-green text-lg mb-4 glow-sm" style="font-size:1rem;letter-spacing:0.1em;">QUEST MAP</div>
+    <div class="space-y-0.5">
+      <a href="#config" class="nav-link">⚙️ Config</a>
+      <a href="#init" class="nav-link">🏗️ Repo Creation</a>
+      <a href="#changes" class="nav-link">✏️ Making Changes</a>
+      <a href="#commit" class="nav-link">📦 Committing</a>
+      <a href="#branch" class="nav-link">🌿 Branching</a>
+      <a href="#merge" class="nav-link">🤝 Merging</a>
+      <a href="#rebase" class="nav-link">🎯 Rebasing</a>
+      <a href="#undo" class="nav-link">⏪ Undoing</a>
+      <a href="#stash" class="nav-link">🎒 Stashing</a>
+      <a href="#remote" class="nav-link">🌐 Remotes</a>
+      <a href="#fetch-pull" class="nav-link">📥 Fetch & Pull</a>
+      <a href="#push" class="nav-link">📤 Pushing</a>
+      <a href="#tag" class="nav-link">🏷️ Tagging</a>
+      <a href="#history" class="nav-link">📖 History</a>
+      <a href="#diff" class="nav-link">🔍 Comparing</a>
+      <a href="#find" class="nav-link">🕵️ Finding</a>
+      <a href="#cherry" class="nav-link">🍒 Cherry-pick</a>
+      <a href="#stash2" class="nav-link">⚡ Aliases</a>
+      <a href="#best-practices" class="nav-link">💎 Best Practices</a>
+      <a href="#emergency" class="nav-link">🚨 Emergency</a>
+    </div>
+
+    <div class="mt-6 pt-4" style="border-top:1px solid #1a3a1a;">
+      <div class="font-mono text-xs text-terminal-dim mb-2">DANGER LEVELS</div>
+      <div class="space-y-1.5">
+        <div class="flex items-center gap-2 text-xs"><span class="badge badge-safe">SAFE</span><span class="text-terminal-dim">Chill</span></div>
+        <div class="flex items-center gap-2 text-xs"><span class="badge badge-medium">⚠️ MED</span><span class="text-terminal-dim">Think</span></div>
+        <div class="flex items-center gap-2 text-xs"><span class="badge badge-danger">💀 RUN</span><span class="text-terminal-dim">Pray</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <main style="flex:1;min-width:0;padding:40px 24px;max-width:1000px;">
+
+    <!-- CONFIGURATION -->
+    <section id="config" class="mb-16">
+      <div class="section-header mb-2">⚙️ Configuration</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"Before saving the world, the world needs to know who you are!"</span></p>
+      <div class="card overflow-hidden">
+        <table>
+          <thead><tr><th>Command</th><th>What It Actually Does</th><th>Vibes</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git config --global user.name "Your Name"</span></td><td>Tell Git who you are</td><td>So teammates know who to blame... or praise 🎭</td></tr>
+            <tr><td><span class="cmd-block">git config --global user.email "you@email"</span></td><td>Set your email</td><td>For when prod breaks at 3 AM and they need you 📧</td></tr>
+            <tr><td><span class="cmd-block">git config --global color.ui auto</span></td><td>Make Git pretty</td><td>Life's too short for boring terminals 🌈</td></tr>
+            <tr><td><span class="cmd-block">git config --list</span></td><td>Show all settings</td><td>"Did I really set that?" moment 🤔</td></tr>
+            <tr><td><span class="cmd-block">git config --global --edit</span></td><td>Open config file</td><td>Feel like a hacker 💻</td></tr>
+            <tr><td><span class="cmd-block">git config --global alias.[a] [cmd]</span></td><td>Create shortcuts</td><td><code>git co</code> beats <code>git checkout</code> any day! ⚡</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tip-box mt-4">💡 <span class="text-terminal-green">Pro Tip:</span> Set these up first, or every commit will haunt you with "Unknown author" forever!
+      </div>
+    </section>
+
+    <!-- REPO CREATION -->
+    <section id="init" class="mb-16">
+      <div class="section-header mb-2">🏗️ Repository Creation</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"Every empire starts with a single git init"</span></p>
+      <div class="card overflow-hidden">
+        <table>
+          <thead><tr><th>Command</th><th>What It Does</th><th>Real-Life Analogy</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git init</span></td><td>Start a new repo here</td><td>"I declare this folder… a GIT REPOSITORY!" 👑</td></tr>
+            <tr><td><span class="cmd-block">git init [directory]</span></td><td>Create repo in new folder</td><td>Build your castle somewhere else 🏰</td></tr>
+            <tr><td><span class="cmd-block">git clone [url]</span></td><td>Copy someone's repo</td><td>"I'll take one of everything, please!" 🛍️</td></tr>
+            <tr><td><span class="cmd-block">git clone [url] [dir]</span></td><td>Clone into specific folder</td><td>Picky about where you live? Same. 🏡</td></tr>
+            <tr><td><span class="cmd-block">git clone --depth [n] [url]</span></td><td>Clone without full history</td><td>Just give me the highlights reel 🎬</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="amber-box mt-4">🎓 <span class="text-terminal-amber">Learning Moment:</span> <span class="text-terminal-dim"><code class="text-terminal-green">git init</code> = "Let's track changes!" · <code class="text-terminal-green">git clone</code> = "I want what they're having!"</span>
+      </div>
+    </section>
+
+    <!-- MAKING CHANGES -->
+    <section id="changes" class="mb-16">
+      <div class="section-header mb-2">✏️ Making Changes</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"With great code comes great responsibility"</span></p>
+      <div class="card overflow-hidden">
+        <table>
+          <thead><tr><th>Command</th><th>Translation</th><th>When to Use</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git status</span></td><td>"What mess have I made?"</td><td>Every 5 minutes (no judgement) 👀</td></tr>
+            <tr><td><span class="cmd-block">git status -s</span></td><td>Short status</td><td>When you're in a hurry ⚡</td></tr>
+            <tr><td><span class="cmd-block">git diff</span></td><td>Show what changed</td><td>Before committing something embarrassing 😅</td></tr>
+            <tr><td><span class="cmd-block">git diff --staged</span></td><td>What's ready to commit?</td><td>Double-checking staged files ✅</td></tr>
+            <tr><td><span class="cmd-block">git add [file]</span></td><td>Stage a specific file</td><td>"This one's ready for the spotlight!" ⭐</td></tr>
+            <tr><td><span class="cmd-block">git add .</span></td><td>Stage almost everything</td><td>The "add it all and sort it out later" approach 📦</td></tr>
+            <tr><td><span class="cmd-block">git add -A</span></td><td>Stage EVERYTHING</td><td>Including deleted files (Git remembers!) 🧠</td></tr>
+            <tr><td><span class="cmd-block">git add -p</span></td><td>Stage piece by piece</td><td>For the perfectionists 🎨</td></tr>
+            <tr><td><span class="cmd-block">git rm [file]</span></td><td>Delete from Git + disk</td><td>"I never want to see you again!" 🗑️</td></tr>
+            <tr><td><span class="cmd-block">git rm --cached [file]</span></td><td>Stop tracking, keep file</td><td>"We can still be friends… just not on Git" 😬</td></tr>
+            <tr><td><span class="cmd-block">git mv [old] [new]</span></td><td>Rename or move files</td><td>Witness protection for files 🥸</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- COMMITTING -->
+    <section id="commit" class="mb-16">
+      <div class="section-header mb-2">📦 Committing</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"A commit a day keeps the merge conflicts away"</span></p>
+      <div class="card overflow-hidden mb-6">
+        <table>
+          <thead><tr><th>Command</th><th>What's Happening</th><th>Danger</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git commit -m "message"</span></td><td>Save staged changes forever</td><td><span class="badge badge-safe">SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git commit -a -m "message"</span></td><td>Stage + commit tracked files</td><td><span class="badge badge-safe">SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git commit --amend</span></td><td>Fix your last commit</td><td><span class="badge badge-medium">⚠️ MED</span></td></tr>
+            <tr><td><span class="cmd-block">git commit --amend --no-edit</span></td><td>Add to last commit, same msg</td><td><span class="badge badge-medium">⚠️ MED</span></td></tr>
+            <tr><td><span class="cmd-block">git commit --allow-empty -m "x"</span></td><td>Commit with no changes</td><td><span class="badge badge-safe">SAFE</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Commit message hall of fame/shame -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="card p-4">
+          <div class="font-mono text-terminal-green text-xs mb-3 glow-sm">✅ HALL OF FAME</div>
+          <div class="space-y-2">
+            <div class="cmd-block text-terminal-green block">Fix: prevent negative pizza orders</div>
+            <div class="cmd-block text-terminal-green block">Add: JWT authentication</div>
+            <div class="cmd-block text-terminal-green block">Refactor: extract payment logic</div>
+            <div class="cmd-block text-terminal-green block">Docs: update Windows setup</div>
+          </div>
+        </div>
+        <div class="card p-4">
+          <div class="font-mono text-terminal-red text-xs mb-3 glow-red">💀 HALL OF SHAME</div>
+          <div class="space-y-2">
+            <div class="cmd-block text-terminal-red block" style="border-color:#ff333330;">fixed stuff</div>
+            <div class="cmd-block text-terminal-red block" style="border-color:#ff333330;">asdfasdf</div>
+            <div class="cmd-block text-terminal-red block" style="border-color:#ff333330;">I hate computers</div>
+            <div class="cmd-block text-terminal-red block" style="border-color:#ff333330;">Final FINAL v3 (real)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BRANCHING -->
+    <section id="branch" class="mb-16">
+      <div class="section-header mb-2">🌿 Branching</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"Because experimenting in production is a résumé-generating event"</span></p>
+      <div class="card overflow-hidden">
+        <table>
+          <thead><tr><th>Command</th><th>Wizard Translation</th><th>Use Case</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git branch</span></td><td>"Show all my universes"</td><td>See what branches exist 🌌</td></tr>
+            <tr><td><span class="cmd-block">git branch -a</span></td><td>"Show ALL universes (+ remote)"</td><td>Full multiverse tour 🎭</td></tr>
+            <tr><td><span class="cmd-block">git branch [name]</span></td><td>"Create a new universe"</td><td>Start a new feature 🎨</td></tr>
+            <tr><td><span class="cmd-block">git branch -d [name]</span></td><td>"Safely delete branch"</td><td>After merging, like a responsible adult ✨</td></tr>
+            <tr><td><span class="cmd-block">git branch -D [name]</span></td><td>"FORCE DELETE THIS!"</td><td><span class="badge badge-danger">💀 EXTREME</span></td></tr>
+            <tr><td><span class="cmd-block">git branch -m [old] [new]</span></td><td>"Rename my universe"</td><td>Rebranding time ✏️</td></tr>
+            <tr><td><span class="cmd-block">git checkout [branch]</span></td><td>"Teleport to another branch"</td><td>The OG way 🚀</td></tr>
+            <tr><td><span class="cmd-block">git checkout -b [branch]</span></td><td>"Create + jump"</td><td>One-liner magic ✨</td></tr>
+            <tr><td><span class="cmd-block">git switch [branch]</span></td><td>"Switch (modern way)"</td><td>Git's new hotness 🔥</td></tr>
+            <tr><td><span class="cmd-block">git switch -c [branch]</span></td><td>"Create + switch (modern)"</td><td>Less confusing than checkout 🎯</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- MERGING -->
+    <section id="merge" class="mb-16">
+      <div class="section-header mb-2">🤝 Merging</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"Where code meets and hopefully doesn't fight"</span></p>
+      <div class="card overflow-hidden mb-6">
+        <table>
+          <thead><tr><th>Command</th><th>What Happens</th><th>Danger</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git merge [branch]</span></td><td>Combine that branch with this</td><td><span class="badge badge-medium">🤞 PRAY</span></td></tr>
+            <tr><td><span class="cmd-block">git merge --no-ff [branch]</span></td><td>Merge but keep history clean</td><td><span class="badge badge-safe">SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git merge --squash [branch]</span></td><td>Smush all commits into one</td><td><span class="badge badge-safe">SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git merge --abort</span></td><td>ABORT! Go back!</td><td><span class="badge badge-safe">SAFE</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card p-5">
+        <div class="font-display text-terminal-amber text-xl glow-amber mb-4">MERGE CONFLICT SURVIVAL GUIDE</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="flex items-start gap-3">
+            <span class="font-display text-terminal-green text-lg" style="min-width:24px;">1.</span>
+            <span class="font-mono text-sm text-terminal-dim">Don't panic 😱</span>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="font-display text-terminal-green text-lg" style="min-width:24px;">2.</span>
+            <span class="font-mono text-sm text-terminal-dim">Okay, panic a little</span>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="font-display text-terminal-green text-lg" style="min-width:24px;">3.</span>
+            <span class="font-mono text-sm text-terminal-dim">Run <code class="text-terminal-green">git status</code></span>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="font-display text-terminal-green text-lg" style="min-width:24px;">4.</span>
+            <span class="font-mono text-sm text-terminal-dim">Fix conflicts manually</span>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="font-display text-terminal-green text-lg" style="min-width:24px;">5.</span>
+            <span class="font-mono text-sm text-terminal-dim"><code class="text-terminal-green">git add</code> resolved files</span>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="font-display text-terminal-green text-lg" style="min-width:24px;">6.</span>
+            <span class="font-mono text-sm text-terminal-dim">Celebrate survival 🎉</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REBASING -->
+    <section id="rebase" class="mb-16">
+      <div class="section-header mb-2">🎯 Rebasing</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"With great power comes great responsibility… and potential disasters"</span></p>
+      <div class="card overflow-hidden mb-4">
+        <table>
+          <thead><tr><th>Command</th><th>Time Traveler's Guide</th><th>Danger</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git rebase [branch]</span></td><td>Move commits on top of branch</td><td><span class="badge badge-medium">⚠️ MEDIUM</span></td></tr>
+            <tr><td><span class="cmd-block">git rebase -i [commit]</span></td><td>Reorganize commits</td><td><span class="badge badge-danger">⚠️⚠️ HIGH</span></td></tr>
+            <tr><td><span class="cmd-block">git rebase --continue</span></td><td>Fixed conflicts, keep going!</td><td><span class="badge badge-safe">SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git rebase --abort</span></td><td>Time travel failed, go back!</td><td><span class="badge badge-safe">SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git rebase --skip</span></td><td>Skip problematic commit</td><td><span class="badge badge-medium">😬 RISKY</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="warning-box">
+        🚨 <span class="text-terminal-red font-bold">GOLDEN RULE:</span> NEVER rebase commits you've already pushed to a shared branch! Your teammates will hunt you down. 👿
+      </div>
+    </section>
+
+    <!-- UNDOING -->
+    <section id="undo" class="mb-16">
+      <div class="section-header mb-2">⏪ Undoing Changes</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"Ctrl+Z on steroids"</span></p>
+      <div class="card overflow-hidden mb-4">
+        <table>
+          <thead><tr><th>Command</th><th>Plain English</th><th>Danger</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git reset [file]</span></td><td>Unstage this file</td><td><span class="badge badge-safe">😊 SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git reset --soft [commit]</span></td><td>Go back, keep changes staged</td><td><span class="badge badge-safe">😊 SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git reset --mixed [commit]</span></td><td>Go back, unstage everything</td><td><span class="badge badge-medium">😐 MOD</span></td></tr>
+            <tr><td><span class="cmd-block">git reset --hard [commit]</span></td><td>DESTROY and go back</td><td><span class="badge badge-danger">💀 DANGER!</span></td></tr>
+            <tr><td><span class="cmd-block">git reset --hard HEAD</span></td><td>BURN IT ALL!</td><td><span class="badge badge-danger">💀💀 EXTREME!</span></td></tr>
+            <tr><td><span class="cmd-block">git revert [commit]</span></td><td>Undo commit with a new commit</td><td><span class="badge badge-safe">😊 SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git restore [file]</span></td><td>Discard changes (modern)</td><td><span class="badge badge-medium">😐 MOD</span></td></tr>
+            <tr><td><span class="cmd-block">git restore --staged [file]</span></td><td>Unstage file (modern)</td><td><span class="badge badge-safe">😊 SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git clean -fd</span></td><td>Delete all untracked files</td><td><span class="badge badge-danger">💀 NO UNDO!</span></td></tr>
+            <tr><td><span class="cmd-block">git clean -n</span></td><td>Show what WOULD be deleted</td><td><span class="badge badge-safe">Just Looking</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Reset visual -->
+      <div class="card p-5">
+        <div class="font-display text-terminal-green text-xl glow-sm mb-4">RESET DANGER METER</div>
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between font-mono text-xs mb-1"><span class="text-terminal-green">--soft</span><span class="text-terminal-dim">I changed my mind about the commit</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:20%;background:linear-gradient(90deg,#00ff41,#00ff41);"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between font-mono text-xs mb-1"><span class="text-terminal-amber">--mixed</span><span class="text-terminal-dim">Unstage but keep changes</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:50%;background:linear-gradient(90deg,#00ff41,#ffb300);"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between font-mono text-xs mb-1"><span class="text-terminal-red">--hard</span><span class="text-terminal-dim">💀 BURN IT ALL!</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:100%;background:linear-gradient(90deg,#00ff41,#ffb300,#ff3333);"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STASHING -->
+    <section id="stash" class="mb-16">
+      <div class="section-header mb-2">🎒 Stashing</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"For when your boss says 'urgent bug!' in the middle of your feature"</span></p>
+      <div class="card overflow-hidden mb-4">
+        <table>
+          <thead><tr><th>Command</th><th>What's Really Happening</th><th>Scenario</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git stash</span></td><td>Hide my mess temporarily</td><td>Boss: "Fix prod NOW!" 🚨</td></tr>
+            <tr><td><span class="cmd-block">git stash save "message"</span></td><td>Hide with a helpful note</td><td>Future you will thank you 📝</td></tr>
+            <tr><td><span class="cmd-block">git stash list</span></td><td>What did I hide?</td><td>Memory jog time 🧠</td></tr>
+            <tr><td><span class="cmd-block">git stash pop</span></td><td>Give my stuff back + delete stash</td><td>Classic retrieval 📤</td></tr>
+            <tr><td><span class="cmd-block">git stash apply</span></td><td>Give my stuff back, keep stash</td><td>Playing it safe 🛡️</td></tr>
+            <tr><td><span class="cmd-block">git stash apply stash@{2}</span></td><td>Grab that specific stash</td><td>Stash archaeology ⛏️</td></tr>
+            <tr><td><span class="cmd-block">git stash drop</span></td><td>Delete recent stash</td><td>Spring cleaning 🧹</td></tr>
+            <tr><td><span class="cmd-block">git stash clear</span></td><td>Delete ALL stashes</td><td><span class="badge badge-danger">💣 NUCLEAR</span></td></tr>
+            <tr><td><span class="cmd-block">git stash branch [name]</span></td><td>Create branch from stash</td><td>Big brain move 🧠</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Stash lifecycle -->
+      <div class="card p-5">
+        <div class="font-display text-terminal-green text-lg glow-sm mb-3">🎭 THE STASH LIFECYCLE</div>
+        <div class="flex flex-wrap gap-2 items-center font-mono text-xs">
+          <span class="px-3 py-2 rounded" style="background:#0f2a0f;border:1px solid #1a3a1a;color:#a0c8a0;">Working on feature</span>
+          <span class="text-terminal-dim">→</span>
+          <span class="px-3 py-2 rounded text-terminal-red" style="background:#2a0f0f;border:1px solid #3a1a1a;">"Drop everything!" 😱</span>
+          <span class="text-terminal-dim">→</span>
+          <span class="px-3 py-2 rounded text-terminal-green" style="background:#0f2a0f;border:1px solid #1a3a1a;">git stash</span>
+          <span class="text-terminal-dim">→</span>
+          <span class="px-3 py-2 rounded text-terminal-amber" style="background:#2a1a0f;border:1px solid #3a2a0f;">Fix urgent bug</span>
+          <span class="text-terminal-dim">→</span>
+          <span class="px-3 py-2 rounded text-terminal-green" style="background:#0f2a0f;border:1px solid #1a3a1a;">git stash pop</span>
+          <span class="text-terminal-dim">→</span>
+          <span class="px-3 py-2 rounded" style="background:#0f2a0f;border:1px solid #1a3a1a;color:#a0c8a0;">Sanity restored ✨</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- REMOTES -->
+    <section id="remote" class="mb-16">
+      <div class="section-header mb-2">🌐 Remote Repositories</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"Because code that lives only on your laptop is lonely"</span></p>
+      <div class="card overflow-hidden">
+        <table>
+          <thead><tr><th>Command</th><th>Social Translation</th><th>Use Case</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git remote</span></td><td>"Who are my friends?"</td><td>List all remotes 👥</td></tr>
+            <tr><td><span class="cmd-block">git remote -v</span></td><td>"Where do my friends live?"</td><td>URLs included 🗺️</td></tr>
+            <tr><td><span class="cmd-block">git remote add [name] [url]</span></td><td>"Make a new friend"</td><td>Adding origin, upstream 🤝</td></tr>
+            <tr><td><span class="cmd-block">git remote remove [name]</span></td><td>"Unfriend this remote"</td><td>Breakups happen 💔</td></tr>
+            <tr><td><span class="cmd-block">git remote rename [old] [new]</span></td><td>"Rename my friend"</td><td>Rebranding! 🎨</td></tr>
+            <tr><td><span class="cmd-block">git remote set-url [name] [url]</span></td><td>"My friend moved addresses"</td><td>URL updates 📬</td></tr>
+            <tr><td><span class="cmd-block">git remote prune [name]</span></td><td>"Clean up dead references"</td><td>Marie Kondo for Git 🧹</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FETCH & PULL -->
+    <section id="fetch-pull" class="mb-16">
+      <div class="section-header mb-2">📥 Fetching & Pulling</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"Keeping up with what everyone else is doing"</span></p>
+      <div class="card overflow-hidden mb-4">
+        <table>
+          <thead><tr><th>Command</th><th>What You're Really Doing</th><th>Risk</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git fetch</span></td><td>Download updates, don't touch my code</td><td><span class="badge badge-safe">🐌 SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git fetch --all</span></td><td>Download ALL the updates!</td><td><span class="badge badge-safe">🐌 SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git fetch --prune</span></td><td>Update and cleanup dead branches</td><td><span class="badge badge-safe">🧹 TIDY</span></td></tr>
+            <tr><td><span class="cmd-block">git pull</span></td><td>Download AND merge right now</td><td><span class="badge badge-medium">🚀 RISKY</span></td></tr>
+            <tr><td><span class="cmd-block">git pull --rebase</span></td><td>Pull and rebase my commits</td><td><span class="badge badge-medium">🎯 CLEAN</span></td></tr>
+            <tr><td><span class="cmd-block">git pull --ff-only</span></td><td>Only pull if it's simple</td><td><span class="badge badge-safe">😊 SAFE</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="card p-4">
+          <div class="font-display text-terminal-cyan text-lg mb-2" style="color:#00ffff;text-shadow:0 0 8px #00ffff60;">FETCH</div>
+          <div class="font-mono text-xs text-terminal-dim">"Show me what's new without touching my code"</div>
+          <div class="mt-2 font-mono text-xs text-terminal-green">→ Downloads only</div>
+        </div>
+        <div class="card p-4">
+          <div class="font-display text-terminal-amber text-lg glow-amber mb-2">PULL</div>
+          <div class="font-mono text-xs text-terminal-dim">"Give me what's new AND update my code"</div>
+          <div class="mt-2 font-mono text-xs text-terminal-amber">→ Fetch + Merge</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PUSHING -->
+    <section id="push" class="mb-16">
+      <div class="section-header mb-2">📤 Pushing</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"Sending your code into the world"</span></p>
+      <div class="card overflow-hidden mb-4">
+        <table>
+          <thead><tr><th>Command</th><th>Real Meaning</th><th>Danger</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git push</span></td><td>Upload my commits!</td><td><span class="badge badge-safe">😊 GO</span></td></tr>
+            <tr><td><span class="cmd-block">git push [remote] [branch]</span></td><td>Send to specific location</td><td><span class="badge badge-safe">🎯 PRECISE</span></td></tr>
+            <tr><td><span class="cmd-block">git push -u [remote] [branch]</span></td><td>Push and remember for next time</td><td><span class="badge badge-safe">🆕 FIRST</span></td></tr>
+            <tr><td><span class="cmd-block">git push --tags</span></td><td>Send tags too</td><td><span class="badge badge-safe">🏷️ TAGS</span></td></tr>
+            <tr><td><span class="cmd-block">git push --force</span></td><td>OVERRIDE EVERYTHING!</td><td><span class="badge badge-danger">⚠️ DANGER ZONE</span></td></tr>
+            <tr><td><span class="cmd-block">git push --force-with-lease</span></td><td>Force but with safety net</td><td><span class="badge badge-medium">🛡️ SAFER</span></td></tr>
+            <tr><td><span class="cmd-block">git push --delete [remote] [branch]</span></td><td>Delete remote branch</td><td><span class="badge badge-medium">🗑️ DELETE</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="warning-box">
+        <div class="font-bold text-terminal-red mb-2">🚨 FORCE PUSH ZONES</div>
+        <div class="grid grid-cols-2 gap-2 font-mono text-xs">
+          <div><span class="text-terminal-green">✅ OKAY:</span> Your own feature branch</div>
+          <div><span class="text-terminal-red">❌ NEVER:</span> main/master</div>
+          <div><span class="text-terminal-red">❌ NEVER:</span> Any shared branch</div>
+          <div><span class="text-terminal-red">❌ NEVER:</span> Production (your job)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAGGING -->
+    <section id="tag" class="mb-16">
+      <div class="section-header mb-2">🏷️ Tagging</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"For when commits deserve names"</span></p>
+      <div class="card overflow-hidden">
+        <table>
+          <thead><tr><th>Command</th><th>Purpose</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git tag</span></td><td>Show all tags</td><td>See what exists 📚</td></tr>
+            <tr><td><span class="cmd-block">git tag [tag-name]</span></td><td>Quick lightweight tag</td><td><code>v1.0</code></td></tr>
+            <tr><td><span class="cmd-block">git tag -a [tag] -m "msg"</span></td><td>Annotated tag with notes</td><td><code>v1.0 "First release!" 🎉</code></td></tr>
+            <tr><td><span class="cmd-block">git tag [tag] [commit]</span></td><td>Tag an old commit</td><td>Retroactive tagging ⏰</td></tr>
+            <tr><td><span class="cmd-block">git push [remote] [tag]</span></td><td>Share this tag</td><td>Release time! 📤</td></tr>
+            <tr><td><span class="cmd-block">git push --tags</span></td><td>Share ALL tags</td><td>Mass upload ⬆️</td></tr>
+            <tr><td><span class="cmd-block">git tag -d [tag]</span></td><td>Delete local tag</td><td>Oops, wrong tag 😅</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="history" class="mb-16">
+      <div class="section-header mb-2">📖 Viewing History</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"Git archaeology — who did what and when?"</span></p>
+      <div class="card overflow-hidden mb-4">
+        <table>
+          <thead><tr><th>Command</th><th>What You Find</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git log</span></td><td>Full commit history 📜</td></tr>
+            <tr><td><span class="cmd-block">git log --oneline</span></td><td>Condensed highlights 📝</td></tr>
+            <tr><td><span class="cmd-block">git log --graph</span></td><td>ASCII art history 🎨</td></tr>
+            <tr><td><span class="cmd-block">git log --all --graph --decorate</span></td><td>The full masterpiece 🖼️</td></tr>
+            <tr><td><span class="cmd-block">git log -n 5</span></td><td>Last 5 commits only 🔢</td></tr>
+            <tr><td><span class="cmd-block">git log --since="2 weeks ago"</span></td><td>Recent history ⏰</td></tr>
+            <tr><td><span class="cmd-block">git log --author="Alice"</span></td><td>What did Alice commit? 👤</td></tr>
+            <tr><td><span class="cmd-block">git log --grep="bug"</span></td><td>Find commits mentioning 'bug' 🐛</td></tr>
+            <tr><td><span class="cmd-block">git blame [file]</span></td><td>"WHO DID THIS?!" 👁️</td></tr>
+            <tr><td><span class="cmd-block">git show [commit]</span></td><td>Commit details 🔬</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tip-box">
+        😅 <span class="text-terminal-green">Git Blame Wisdom:</span> <span class="text-terminal-dim">"git blame should be called git credit… unless it's your bug"</span>
+      </div>
+    </section>
+
+    <!-- DIFF & FIND -->
+    <section id="diff" class="mb-16">
+      <div class="section-header mb-2">🔍 Comparing</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"Spot the difference"</span></p>
+      <div class="card overflow-hidden mb-4">
+        <table>
+          <thead><tr><th>Command</th><th>Comparison Type</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git diff</span></td><td>What did I change? (before staging) 👀</td></tr>
+            <tr><td><span class="cmd-block">git diff --staged</span></td><td>What's about to be committed? ✅</td></tr>
+            <tr><td><span class="cmd-block">git diff [c1] [c2]</span></td><td>What changed between commits? 📊</td></tr>
+            <tr><td><span class="cmd-block">git diff [br1]..[br2]</span></td><td>How do branches differ? 🌿</td></tr>
+            <tr><td><span class="cmd-block">git diff --name-only</span></td><td>Which files changed? 📝</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Diff color guide -->
+      <div class="card p-4">
+        <div class="font-mono text-xs text-terminal-dim mb-3">READING A DIFF</div>
+        <div class="font-mono text-sm space-y-1">
+          <div style="color:#00ff41;">+ Added lines look like this</div>
+          <div style="color:#ff3333;">- Deleted lines look like this</div>
+          <div style="color:#a0c8a0;">  Context lines (unchanged)</div>
+          <div style="color:#00ffff;">@@ -line,count +line,count @@ header</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINDING -->
+    <section id="find" class="mb-16">
+      <div class="section-header mb-2">🕵️ Finding</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"Where's Waldo... but for code"</span></p>
+      <div class="card overflow-hidden mb-4">
+        <table>
+          <thead><tr><th>Command</th><th>Detective Skill</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git grep "pattern"</span></td><td>Search all tracked files 🔍</td></tr>
+            <tr><td><span class="cmd-block">git grep -n "pattern"</span></td><td>With line numbers 📍</td></tr>
+            <tr><td><span class="cmd-block">git log -S"string"</span></td><td>Who added/removed this code? 📜</td></tr>
+            <tr><td><span class="cmd-block">git bisect start</span></td><td>Start binary bug hunt 🎯</td></tr>
+            <tr><td><span class="cmd-block">git bisect bad</span></td><td>This commit is broken 👎</td></tr>
+            <tr><td><span class="cmd-block">git bisect good [commit]</span></td><td>This commit worked 👍</td></tr>
+            <tr><td><span class="cmd-block">git bisect reset</span></td><td>End the hunt 🏁</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CHERRY PICK -->
+    <section id="cherry" class="mb-16">
+      <div class="section-header mb-2">🍒 Cherry-picking</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"I want THAT commit, not the whole branch"</span></p>
+      <div class="card overflow-hidden mb-4">
+        <table>
+          <thead><tr><th>Command</th><th>Gardener's Action</th><th>Danger</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git cherry-pick [commit]</span></td><td>Pluck this commit 🍒</td><td><span class="badge badge-medium">⚠️ MEDIUM</span></td></tr>
+            <tr><td><span class="cmd-block">git cherry-pick [c1] [c2]</span></td><td>Pluck multiple commits 🧺</td><td><span class="badge badge-medium">⚠️ MEDIUM</span></td></tr>
+            <tr><td><span class="cmd-block">git cherry-pick --continue</span></td><td>Keep going after conflicts ✅</td><td><span class="badge badge-safe">SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git cherry-pick --abort</span></td><td>Cancel operation 🚫</td><td><span class="badge badge-safe">SAFE</span></td></tr>
+            <tr><td><span class="cmd-block">git cherry-pick --no-commit [c]</span></td><td>Prepare but don't commit yet 👀</td><td><span class="badge badge-safe">SAFE</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="amber-box">⚠️ Cherry-picking creates <strong>NEW commits</strong> (new hashes). It doesn't move commits — it copies them!</div>
+    </section>
+
+    <!-- ALIASES -->
+    <section id="stash2" class="mb-16">
+      <div class="section-header mb-2">⚡ Useful Aliases</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"Work smarter, not harder"</span></p>
+      <div class="card overflow-hidden mb-4">
+        <table>
+          <thead><tr><th>Shortcut</th><th>Full Command</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cmd-block">git co</span></td><td>git checkout</td></tr>
+            <tr><td><span class="cmd-block">git br</span></td><td>git branch</td></tr>
+            <tr><td><span class="cmd-block">git ci</span></td><td>git commit</td></tr>
+            <tr><td><span class="cmd-block">git st</span></td><td>git status</td></tr>
+            <tr><td><span class="cmd-block">git last</span></td><td>git log -1 HEAD</td></tr>
+            <tr><td><span class="cmd-block">git lg</span></td><td>git log --oneline --graph --decorate</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pretty alias code block -->
+      <div class="card p-5" style="background:#060f06;">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="flex gap-1.5">
+            <div style="width:8px;height:8px;border-radius:50%;background:#ff3333;"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#ffb300;"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#00ff41;"></div>
+          </div>
+          <span class="font-mono text-xs text-terminal-dim">~/.gitconfig power aliases</span>
+        </div>
+        <pre class="font-mono text-sm leading-relaxed overflow-x-auto"><span style="color:#4a7a4a;"># Super status</span>
+<span style="color:#00ff41;">git config --global alias.s</span> <span style="color:#ffb300;">'status -sb'</span>
+
+<span style="color:#4a7a4a;"># Undo last commit (keep changes)</span>
+<span style="color:#00ff41;">git config --global alias.undo</span> <span style="color:#ffb300;">'reset HEAD~1 --mixed'</span>
+
+<span style="color:#4a7a4a;"># Beautiful pretty log</span>
+<span style="color:#00ff41;">git config --global alias.lg</span> <span style="color:#ffb300;">"log --color --graph \
+  --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset \
+  %s %Cgreen(%cr) %C(bold blue)&lt;%an&gt;%Creset' \
+  --abbrev-commit"</span></pre>
+      </div>
+    </section>
+
+    <!-- BEST PRACTICES -->
+    <section id="best-practices" class="mb-16">
+      <div class="section-header mb-2">💎 Best Practices</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-amber">"Wisdom from the ancients (developers who survived merge conflicts)"</span></p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="card p-5">
+          <div class="font-display text-terminal-green text-xl glow-sm mb-3">1. COMMIT OFTEN</div>
+          <div class="font-mono text-xs text-terminal-dim mb-3">Small commits = easy debugging</div>
+          <div style="background:#060f06;border-radius:4px;padding:12px;font-family:'Space Mono',monospace;font-size:0.72rem;line-height:1.8;">
+            <span style="color:#4a7a4a;"># ✅ Good workflow</span><br>
+            <span style="color:#00ff41;">git add feature.js</span><br>
+            <span style="color:#00ff41;">git commit -m</span> <span style="color:#ffb300;">"Add login form"</span><br>
+            <span style="color:#00ff41;">git add tests/feature.test.js</span><br>
+            <span style="color:#00ff41;">git commit -m</span> <span style="color:#ffb300;">"Add login tests"</span>
+          </div>
+        </div>
+
+        <div class="card p-5">
+          <div class="font-display text-terminal-green text-xl glow-sm mb-3">2. PULL BEFORE PUSH</div>
+          <div class="font-mono text-xs text-terminal-dim mb-3">Avoid merge conflicts from hell</div>
+          <div style="background:#060f06;border-radius:4px;padding:12px;font-family:'Space Mono',monospace;font-size:0.72rem;line-height:1.8;">
+            <span style="color:#00ff41;">git pull origin main</span>   <span style="color:#4a7a4a;"># Get latest</span><br>
+            <span style="color:#00ff41;">git push origin main</span>   <span style="color:#4a7a4a;"># Send yours</span>
+          </div>
+        </div>
+
+        <div class="card p-5">
+          <div class="font-display text-terminal-green text-xl glow-sm mb-3">3. BRANCH EVERYTHING</div>
+          <div class="font-mono text-xs text-terminal-dim mb-3">Never develop directly on main!</div>
+          <div style="background:#060f06;border-radius:4px;padding:12px;font-family:'Space Mono',monospace;font-size:0.72rem;line-height:1.8;">
+            <span style="color:#00ff41;">git checkout -b feature/awesome</span><br>
+            <span style="color:#00ff41;">git checkout -b fix/that-bug</span>
+          </div>
+        </div>
+
+        <div class="card p-5">
+          <div class="font-display text-terminal-red text-xl glow-red mb-3">4. NEVER FORCE PUSH</div>
+          <div class="font-mono text-xs text-terminal-dim mb-3">Career-limiting move on shared branches</div>
+          <div style="background:#060f06;border-radius:4px;padding:12px;font-family:'Space Mono',monospace;font-size:0.72rem;line-height:1.8;">
+            <span style="color:#ff3333;"># ❌ NEVER ON MAIN!</span><br>
+            <span style="color:#ff333360;">git push --force origin main</span><br><br>
+            <span style="color:#00ff41;"># ✅ Feature branch okay</span><br>
+            <span style="color:#00ff41;">git push --force-with-lease origin feature/x</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Golden rules list -->
+      <div class="card p-5 mb-6">
+        <div class="font-display text-terminal-green text-xl glow-sm mb-4">THE GOLDEN RULES</div>
+        <div class="space-y-3">
+          <div class="flex gap-3 items-start">
+            <span class="font-display text-terminal-green" style="font-size:1.5rem;min-width:30px;">5.</span>
+            <div><div class="font-mono text-sm text-terminal-green">Review Before Committing</div><div class="font-mono text-xs text-terminal-dim mt-0.5">Run <code>git diff --staged</code> before every commit</div></div>
+          </div>
+          <div class="flex gap-3 items-start">
+            <span class="font-display text-terminal-green" style="font-size:1.5rem;min-width:30px;">6.</span>
+            <div><div class="font-mono text-sm text-terminal-green">Keep Commits Atomic</div><div class="font-mono text-xs text-terminal-dim mt-0.5">One commit = one logical change. Not 47 things at once.</div></div>
+          </div>
+          <div class="flex gap-3 items-start">
+            <span class="font-display text-terminal-green" style="font-size:1.5rem;min-width:30px;">7.</span>
+            <div><div class="font-mono text-sm text-terminal-green">Meaningful Branch Names</div><div class="font-mono text-xs text-terminal-dim mt-0.5"><code class="text-terminal-green">feature/user-auth</code> not <code class="text-terminal-red">asdf-2-final</code></div></div>
+          </div>
+          <div class="flex gap-3 items-start">
+            <span class="font-display text-terminal-green" style="font-size:1.5rem;min-width:30px;">8.</span>
+            <div><div class="font-mono text-sm text-terminal-green">Use .gitignore Wisely</div><div class="font-mono text-xs text-terminal-dim mt-0.5">Never commit <code>node_modules/</code>, <code>.env</code>, <code>secrets.txt</code> 🙏</div></div>
+          </div>
+          <div class="flex gap-3 items-start">
+            <span class="font-display text-terminal-green" style="font-size:1.5rem;min-width:30px;">9.</span>
+            <div><div class="font-mono text-sm text-terminal-green">Test Before Committing</div><div class="font-mono text-xs text-terminal-dim mt-0.5">If tests fail, fix them first! (Novel concept, we know)</div></div>
+          </div>
+          <div class="flex gap-3 items-start">
+            <span class="font-display text-terminal-green" style="font-size:1.5rem;min-width:30px;">10.</span>
+            <div><div class="font-mono text-sm text-terminal-green">Keep Main Stable</div><div class="font-mono text-xs text-terminal-dim mt-0.5">Break things in feature branches. Merge only when reviewed.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EMERGENCY SECTION -->
+    <section id="emergency" class="mb-16">
+      <div class="section-header mb-2" style="color:#ff3333;text-shadow:0 0 12px #ff333360;">🚨 Emergency Commands</div>
+      <p class="text-terminal-dim font-mono text-sm mb-6"><span class="text-terminal-red">"When things go horribly wrong"</span></p>
+
+      <div class="space-y-4">
+        <!-- Emergency 1 -->
+        <div class="card p-5" style="border-color:#3a1a1a;">
+          <div class="font-mono text-terminal-amber mb-3 glow-amber font-bold">😱 "I committed to the wrong branch!"</div>
+          <pre class="font-mono text-sm leading-relaxed overflow-x-auto" style="background:#060f06;padding:12px;border-radius:4px;"><span style="color:#00ff41;">git reset HEAD~ --soft</span>       <span style="color:#4a7a4a;"># Undo commit, keep changes</span>
+<span style="color:#00ff41;">git stash</span>                    <span style="color:#4a7a4a;"># Save your changes</span>
+<span style="color:#00ff41;">git checkout correct-branch</span>  <span style="color:#4a7a4a;"># Go to right branch</span>
+<span style="color:#00ff41;">git stash pop</span>                <span style="color:#4a7a4a;"># Apply your changes</span>
+<span style="color:#00ff41;">git commit -m</span> <span style="color:#ffb300;">"Right branch!"</span></pre>
+        </div>
+
+        <!-- Emergency 2 -->
+        <div class="card p-5" style="border-color:#3a1a1a;">
+          <div class="font-mono text-terminal-amber mb-3 glow-amber font-bold">😱 "I need to undo my last commit!"</div>
+          <pre class="font-mono text-sm leading-relaxed overflow-x-auto" style="background:#060f06;padding:12px;border-radius:4px;"><span style="color:#00ff41;">git reset HEAD~1 --soft</span>   <span style="color:#4a7a4a;"># Keep changes, undo commit</span>
+<span style="color:#00ff41;">git reset HEAD~1 --mixed</span>  <span style="color:#4a7a4a;"># Unstage, keep changes</span>
+<span style="color:#ff3333;">git reset HEAD~1 --hard</span>   <span style="color:#4a7a4a;"># DESTROY EVERYTHING ⚠️</span></pre>
+        </div>
+
+        <!-- Emergency 3 -->
+        <div class="card p-5" style="border-color:#3a1a1a;">
+          <div class="font-mono text-terminal-amber mb-3 glow-amber font-bold">😱 "I accidentally deleted important code!"</div>
+          <pre class="font-mono text-sm leading-relaxed overflow-x-auto" style="background:#060f06;padding:12px;border-radius:4px;"><span style="color:#00ff41;">git reflog</span>                          <span style="color:#4a7a4a;"># Find the lost commit</span>
+<span style="color:#00ff41;">git checkout abc123 -- file.js</span>      <span style="color:#4a7a4a;"># Restore specific file</span>
+<span style="color:#00ff41;">git reset --hard abc123</span>             <span style="color:#4a7a4a;"># Reset to that point</span></pre>
+        </div>
+
+        <!-- Emergency 4 -->
+        <div class="card p-5" style="border-color:#3a1a1a;">
+          <div class="font-mono text-terminal-amber mb-3 glow-amber font-bold">😱 "Help, I'm in a merge conflict!"</div>
+          <pre class="font-mono text-sm leading-relaxed overflow-x-auto" style="background:#060f06;padding:12px;border-radius:4px;"><span style="color:#4a7a4a;"># Option 1: Brave it out</span>
+<span style="color:#00ff41;">git status</span>       <span style="color:#4a7a4a;"># See conflicts</span>
+<span style="color:#4a7a4a;"># Fix files manually</span>
+<span style="color:#00ff41;">git add .</span>
+<span style="color:#00ff41;">git commit</span>
+
+<span style="color:#4a7a4a;"># Option 2: Escape!</span>
+<span style="color:#00ff41;">git merge --abort</span>  <span style="color:#4a7a4a;"># Run away! Start over!</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKFLOW SECTION -->
+    <section class="mb-16">
+      <div class="section-header mb-6">🎪 Git Workflow Cheat Sheet</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="card p-5">
+          <div class="font-display text-terminal-green text-xl glow-sm mb-3">FEATURE DEVELOPMENT</div>
+          <pre class="font-mono text-xs leading-relaxed overflow-x-auto"><span style="color:#00ff41;">git checkout main</span>
+<span style="color:#00ff41;">git pull origin main</span>
+<span style="color:#00ff41;">git checkout -b feature/cool-thing</span>
+<span style="color:#4a7a4a;"># ... make changes ...</span>
+<span style="color:#00ff41;">git add .</span>
+<span style="color:#00ff41;">git commit -m</span> <span style="color:#ffb300;">"Add cool thing"</span>
+<span style="color:#00ff41;">git push origin feature/cool-thing</span>
+<span style="color:#4a7a4a;"># Create Pull Request</span>
+<span style="color:#4a7a4a;"># Get approval → Merge</span>
+<span style="color:#00ff41;">git branch -d feature/cool-thing</span>  <span style="color:#4a7a4a;"># Cleanup</span></pre>
+        </div>
+        <div class="card p-5">
+          <div class="font-display text-terminal-red text-xl glow-red mb-3">QUICK HOTFIX 🔥</div>
+          <pre class="font-mono text-xs leading-relaxed overflow-x-auto"><span style="color:#00ff41;">git checkout main</span>
+<span style="color:#00ff41;">git pull origin main</span>
+<span style="color:#00ff41;">git checkout -b hotfix/critical-bug</span>
+<span style="color:#4a7a4a;"># ... fix bug ...</span>
+<span style="color:#00ff41;">git add .</span>
+<span style="color:#00ff41;">git commit -m</span> <span style="color:#ffb300;">"Fix critical bug"</span>
+<span style="color:#00ff41;">git push origin hotfix/critical-bug</span>
+<span style="color:#4a7a4a;"># Emergency merge!</span>
+<span style="color:#00ff41;">git checkout main</span>
+<span style="color:#00ff41;">git merge hotfix/critical-bug</span>
+<span style="color:#00ff41;">git push origin main</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER QUOTE -->
+    <section class="mb-16">
+      <div class="card p-8 text-center">
+        <div class="font-display glow" style="font-size:clamp(1.5rem,4vw,2.5rem);color:#00ff41;letter-spacing:0.05em;margin-bottom:16px;">
+          🚀 CONGRATULATIONS!
+        </div>
+        <div class="font-mono text-terminal-dim text-sm mb-4 max-w-lg mx-auto">
+          You've survived the Git Survival Guide! You now have:
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div class="tip-box text-center"><div class="text-terminal-green text-xs">✅ 80+ Commands</div></div>
+          <div class="tip-box text-center"><div class="text-terminal-green text-xs">✅ Best Practices</div></div>
+          <div class="tip-box text-center"><div class="text-terminal-green text-xs">✅ Emergency Recovery</div></div>
+          <div class="tip-box text-center"><div class="text-terminal-green text-xs">✅ Workflow Strategy</div></div>
+        </div>
+        <div class="font-mono text-terminal-amber glow-amber text-sm" style="font-style:italic;">
+          "Git doesn't make your code better,<br>but it makes your mistakes reversible!"
+        </div>
+        <div class="mt-6 font-mono text-xs text-terminal-dim">
+          May your merges be conflict-free and your commits atomic 🎊<br>
+          <span class="animate-blink text-terminal-green">|</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- STILL STUCK? -->
+    <section class="mb-16">
+      <div class="card p-5">
+        <div class="font-display text-terminal-amber text-xl glow-amber mb-4">🆘 Still Stuck?</div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 font-mono text-sm">
+          <div class="flex items-center gap-2"><span class="text-terminal-green">1.</span><span class="text-terminal-dim">Google your error message</span></div>
+          <div class="flex items-center gap-2"><span class="text-terminal-green">2.</span><span class="text-terminal-dim">Check Stack Overflow</span></div>
+          <div class="flex items-center gap-2"><span class="text-terminal-green">3.</span><span class="text-terminal-dim">Ask your rubber duck 🦆</span></div>
+          <div class="flex items-center gap-2"><span class="text-terminal-green">4.</span><span class="text-terminal-dim">Ask ChatGPT / Claude</span></div>
+          <div class="flex items-center gap-2"><span class="text-terminal-amber">5.</span><span class="text-terminal-dim">Start fresh with git clone</span></div>
+          <div class="flex items-center gap-2"><span class="text-terminal-red">6.</span><span class="text-terminal-dim">Pretend you didn't see it ❌</span></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- BACK TO TOP -->
+<a href="#" style="position:fixed;bottom:24px;right:24px;background:#0f1a0f;border:1px solid #1a3a1a;border-radius:6px;padding:10px 14px;font-family:'Space Mono',monospace;font-size:0.7rem;color:#00ff41;text-shadow:0 0 6px #00ff4180;text-decoration:none;transition:all 0.2s;" onmouseover="this.style.borderColor='#00ff4150';this.style.boxShadow='0 0 12px #00ff4120'" onmouseout="this.style.borderColor='#1a3a1a';this.style.boxShadow='none'">↑ TOP</a>
+
+</body>
+</html>
